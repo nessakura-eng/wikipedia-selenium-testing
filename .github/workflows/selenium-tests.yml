@@ -32,10 +32,11 @@ jobs:
           cd wikipedia-selenium
           mvn test -Dheadless=true
 
-      - name: Publish Test Results
-        uses: dorny/test-reporter@v1
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: TestNG Results
-          path: wikipedia-selenium/target/surefire-reports/*.xml
-          reporter: java-junit
+          name: TestNG-Results
+          path: |
+            wikipedia-selenium/target/surefire-reports/
+            wikipedia-selenium/target/wcag-reports/
