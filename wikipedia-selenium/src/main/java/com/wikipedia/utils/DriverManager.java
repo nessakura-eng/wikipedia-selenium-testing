@@ -27,12 +27,8 @@ public class DriverManager {
         options.addArguments("--disable-extensions");
         options.addArguments("--remote-allow-origins=*");
         options.addArguments("--lang=en-US");
-        if (isCI) {
-            options.addArguments("--single-process");
-            options.addArguments("--no-zygote");
-            options.addArguments("--disable-setuid-sandbox");
-            options.addArguments("--disable-features=VizDisplayCompositor");
-        }
+        options.addArguments("--disable-setuid-sandbox");
+        options.addArguments("--disable-features=VizDisplayCompositor");
         WebDriver driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         driverThreadLocal.set(driver);
