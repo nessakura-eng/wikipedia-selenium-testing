@@ -20,15 +20,17 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
 
-      - name: Setup Chrome
-        uses: actions/setup-chrome@v1
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
 
       - name: Run Selenium Tests
         env:
           CI: true
         run: |
           cd wikipedia-selenium
-          mvn test -Dheadless=true -Dsurefire.failIfNoSpecifiedTests=false
+          mvn test -Dheadless=true
 
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
