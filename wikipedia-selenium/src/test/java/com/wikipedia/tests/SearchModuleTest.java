@@ -25,7 +25,7 @@ public class SearchModuleTest extends BaseTest {
      * at least one result is present.
      */
     @Test(groups = {"search", "smoke"},
-            description = "TC-S01: Verify search navigates to a relevant article for a valid query")
+            description = "TC-S01: Verify search navigates to a relevant page for a valid query")
     public void testSearchReturnsResultsForValidQuery() {
         SearchPage searchPage = new SearchPage(driver);
         searchPage.searchFor("history of artificial intelligence");
