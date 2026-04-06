@@ -28,16 +28,24 @@ public class SearchPage extends BasePage {
      */
     public void searchFor(String query) {
         navigateTo("https://en.wikipedia.org/wiki/Main_Page");
-        // Wait for page to fully settle before touching the search input
         WaitUtil.waitForVisible(driver, By.cssSelector("#mp-upper, #mw-content-text"));
-        // Use JavaScript to set the value directly — avoids stale element from JS re-renders
-        By searchInputBy = By.cssSelector(
-                "#searchform input[type='search'], #searchform input[name='search'], " +
-                        ".cdx-search-input input, #searchInput, input[name='search']");
-        WebElement input = WaitUtil.waitForVisible(driver, searchInputBy);
-        ((org.openqa.selenium.JavascriptExecutor) driver)
-                .executeScript("arguments[0].value = arguments[1];", input, query);
-        input.sendKeys(Keys.ENTER);
+
+        boolean isHeadless = Boolean.parseBoolean(System.getProperty("headless", "false"));
+
+        if (isHeadless) {
+            // Jenkins/CI headless mode — URL navigation
+            navigateTo("https://en.wikipedia.org/w/index.php?title=Special:Search&search="
+                    + query.replace(" ", "+") + "&fulltext=1");
+        } else {
+            // Local headed mode — real typing so clicks are visible in demo
+            By searchInputBy = By.cssSelector(
+                    "#searchform input[type='search'], #searchform input[name='search'], " +
+                            ".cdx-search-input input, #searchInput, input[name='search']");
+            WebElement input = WaitUtil.waitForVisible(driver, searchInputBy);
+            ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("arguments[0].value = arguments[1];", input, query);
+            input.sendKeys(Keys.ENTER);
+        }
         WaitUtil.waitForVisible(driver, By.cssSelector("#firstHeading, .firstHeading, h1"));
     }
 
