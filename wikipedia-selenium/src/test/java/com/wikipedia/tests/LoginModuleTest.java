@@ -1,135 +1,146 @@
 package com.wikipedia.tests;
 
-import com.wikipedia.pages.CreateAccountPage;
 import com.wikipedia.pages.LoginPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * MODULE 1: Login Module
- *
- * Test Cases:
- * TC-L01: Verify login page loads with all required form elements
- * TC-L02: Verify error message displayed for invalid credentials
- * TC-L03: Verify "Forgot Password" link is present and navigates correctly
- * TC-L04: Verify "Create Account" link is present and navigates to registration page
- * TC-L05: Verify WCAG accessibility compliance on the login page
- */
 public class LoginModuleTest extends BaseTest {
 
-    /**
-     * TC-L01: Verify login page loads with all required form elements.
-     * Navigates to the login page and asserts that the username field,
-     * password field, and login button are all displayed.
-     */
-    @Test(groups = {"login", "smoke"},
-          description = "TC-L01: Verify login page loads with all required form elements")
+    @Test(priority = 1, groups = {"login", "smoke"},
+            description = "TC-L01: Verify login page loads with all required form elements")
     public void testLoginPageLoadsWithAllElements() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.open();
+        pause();
 
+        // Scroll to and highlight username field
+        WebElement username = driver.findElement(By.cssSelector("#wpName1, input[name='wpName']"));
+        scrollTo(username);
         Assert.assertTrue(loginPage.isUsernameFieldDisplayed(),
-                "TC-L01 FAILED: Username input field is not displayed");
+                "TC-L01 FAILED: Username field not displayed");
+        pause();
+
+        // Scroll to password field
+        WebElement password = driver.findElement(By.cssSelector("#wpPassword1, input[name='wpPassword']"));
+        scrollTo(password);
         Assert.assertTrue(loginPage.isPasswordFieldDisplayed(),
-                "TC-L01 FAILED: Password input field is not displayed");
+                "TC-L01 FAILED: Password field not displayed");
+        pause();
+
+        // Scroll to login button
+        WebElement loginBtn = driver.findElement(By.cssSelector("#wpLoginAttempt, button[type='submit']"));
+        scrollTo(loginBtn);
         Assert.assertTrue(loginPage.isLoginFormDisplayed(),
-                "TC-L01 FAILED: Login form is not displayed");
+                "TC-L01 FAILED: Login form not displayed");
+        pause();
+
         Assert.assertTrue(loginPage.getCurrentUrl().contains("Special:UserLogin"),
-                "TC-L01 FAILED: URL does not contain 'Special:UserLogin'");
+                "TC-L01 FAILED: Not on login page");
     }
 
-    /**
-     * TC-L02: Verify error message displayed for invalid credentials.
-     * Submits the login form with an invalid username/password. Wikipedia will
-     * either show an inline error message OR a CAPTCHA challenge — both indicate
-     * the login was rejected, which is the expected behavior being tested.
-     */
-    @Test(groups = {"login", "regression"},
-          description = "TC-L02: Verify login is rejected for invalid credentials")
+    @Test(priority = 2, groups = {"login", "regression"},
+            description = "TC-L02: Verify login is rejected for invalid credentials")
     public void testInvalidLoginShowsErrorMessage() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.open();
-        loginPage.loginAs("invalid_user_xyz_123", "wrong_password_456");
+        pause();
 
-        // Wikipedia either shows an inline error OR redirects to a CAPTCHA page.
-        // Either way, we must NOT land on a logged-in user page.
+        // Scroll to username, type invalid credentials
+        WebElement username = driver.findElement(By.cssSelector("#wpName1, input[name='wpName']"));
+        scrollTo(username);
+        username.clear();
+        username.sendKeys("invalid_user_xyz_123");
+        pause();
+
+        WebElement password = driver.findElement(By.cssSelector("#wpPassword1, input[name='wpPassword']"));
+        scrollTo(password);
+        password.sendKeys("wrong_password_456");
+        pause();
+
+        // Click the login button
+        WebElement loginBtn = driver.findElement(By.cssSelector("#wpLoginAttempt, button[type='submit']"));
+        scrollTo(loginBtn);
+        loginBtn.click();
+        pause();
+
         String url = driver.getCurrentUrl();
         boolean loginWasRejected =
                 loginPage.isErrorMessageDisplayed()
-                || url.contains("UserLogin")
-                || url.contains("Captcha")
-                || url.contains("captcha")
-                || !url.contains("Special:UserLogin/success");
+                        || url.contains("UserLogin")
+                        || url.contains("Captcha")
+                        || url.contains("captcha")
+                        || !url.contains("Special:UserLogin/success");
 
         Assert.assertTrue(loginWasRejected,
-                "TC-L02 FAILED: Login succeeded unexpectedly for invalid credentials. URL: " + url);
+                "TC-L02 FAILED: Login succeeded unexpectedly. URL: " + url);
     }
 
-    /**
-     * TC-L03: Verify "Forgot Password" link is present and navigates correctly.
-     * Checks for the presence of the forgot password link and verifies it
-     * redirects to the password reset page.
-     */
-    @Test(groups = {"login", "regression"},
-          description = "TC-L03: Verify Forgot Password link navigates to reset page")
+    @Test(priority = 3, groups = {"login", "regression"},
+            description = "TC-L03: Verify Forgot Password link navigates to reset page")
     public void testForgotPasswordLinkNavigation() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.open();
+        pause();
 
+        // Scroll to and click the forgot password link
+        WebElement forgotLink = driver.findElement(
+                By.cssSelector("a[href*='Special:PasswordReset']"));
+        scrollTo(forgotLink);
         Assert.assertTrue(loginPage.isForgotPasswordLinkPresent(),
-                "TC-L03 FAILED: Forgot password link is not present");
-        loginPage.clickForgotPassword();
+                "TC-L03 FAILED: Forgot password link not present");
+        pause();
+
+        forgotLink.click();
+        pause();
 
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("PasswordReset") || currentUrl.contains("password"),
                 "TC-L03 FAILED: Did not navigate to password reset page. URL: " + currentUrl);
     }
 
-    /**
-     * TC-L04: Verify "Create Account" link is present and navigates to registration page.
-     * Asserts the create account link exists on the login page and that clicking
-     * it loads the account creation page (verified by URL and/or form presence).
-     */
-    @Test(groups = {"login", "regression"},
-          description = "TC-L04: Verify Create Account link navigates to registration page")
+    @Test(priority = 4, groups = {"login", "regression"},
+            description = "TC-L04: Verify Create Account link navigates to registration page")
     public void testCreateAccountLinkNavigation() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.open();
+        pause();
 
+        // Scroll to and click Create Account link
+        WebElement createLink = driver.findElement(
+                By.cssSelector("a[href*='Special:CreateAccount']"));
+        scrollTo(createLink);
         Assert.assertTrue(loginPage.isCreateAccountLinkPresent(),
-                "TC-L04 FAILED: Create Account link is not present on login page");
+                "TC-L04 FAILED: Create Account link not present");
+        pause();
 
-        loginPage.clickCreateAccount();
+        createLink.click();
+        pause();
 
-        // Wait for the URL to update to the CreateAccount page — poll until it changes
-        // from the login URL, which is more reliable than waiting for a specific element
         new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(15))
-                .until(d -> d.getCurrentUrl().contains("CreateAccount")
-                          || d.getCurrentUrl().contains("Special:UserLogin") == false);
+                .until(d -> d.getCurrentUrl().contains("CreateAccount"));
+        pause();
 
-        String url = driver.getCurrentUrl();
-        Assert.assertTrue(url.contains("CreateAccount"),
-                "TC-L04 FAILED: URL does not contain 'CreateAccount'. Got: " + url);
+        Assert.assertTrue(driver.getCurrentUrl().contains("CreateAccount"),
+                "TC-L04 FAILED: URL does not contain 'CreateAccount'. Got: " + driver.getCurrentUrl());
     }
 
-    /**
-     * TC-L05: Verify WCAG accessibility compliance on the login page.
-     * Runs an Axe accessibility scan and generates a WCAG report for the login page.
-     * The test passes regardless of violation count (report is generated for review).
-     */
-    @Test(groups = {"login", "accessibility"},
-          description = "TC-L05: Verify WCAG accessibility compliance on the login page")
+    @Test(priority = 5, groups = {"login", "accessibility"},
+            description = "TC-L05: Verify WCAG accessibility compliance on the login page")
     public void testLoginPageWcagCompliance() {
         LoginPage loginPage = new LoginPage(driver);
         loginPage.open();
+        pause();
 
         var results = AxeAccessibilityUtil.runAccessibilityScan(driver, "LoginPage");
         AxeAccessibilityUtil.logViolationSummary(results, "LoginPage");
+        pause();
 
-        Assert.assertNotNull(results, "TC-L05 FAILED: Axe scan returned null results");
+        Assert.assertNotNull(results, "TC-L05 FAILED: Axe scan returned null");
         Assert.assertTrue(loginPage.getCurrentUrl().contains("UserLogin"),
-                "TC-L05 FAILED: Not on login page when running WCAG scan");
+                "TC-L05 FAILED: Not on login page");
 
         System.out.println("[TC-L05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));

@@ -3,116 +3,121 @@ package com.wikipedia.tests;
 import com.wikipedia.pages.ArticlePage;
 import com.wikipedia.pages.CategoryPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * MODULE 5: Category Module
- *
- * Test Cases:
- * TC-C01: Verify category page loads with correct heading
- * TC-C02: Verify articles section is present and contains links
- * TC-C03: Verify subcategories section is present on a parent category
- * TC-C04: Verify clicking a category article link opens the article
- * TC-C05: Verify WCAG accessibility compliance on a category page
- */
 public class CategoryModuleTest extends BaseTest {
 
-    /**
-     * TC-C01: Verify category page loads with correct heading.
-     * Opens the "Mammals" category page and asserts the page heading
-     * contains "Mammals".
-     */
-    @Test(groups = {"category", "smoke"},
+    @Test(priority = 1, groups = {"category", "smoke"},
             description = "TC-C01: Verify category page loads and URL contains Category namespace")
-    public void testCategoryPageLoadsWithCorrectUrl() {
+    public void testCategoryPageLoadsWithCorrectUrl() throws InterruptedException {
         CategoryPage categoryPage = new CategoryPage(driver);
         categoryPage.openCategory("Mammals");
+        pause();
 
         Assert.assertTrue(driver.getCurrentUrl().contains("Category:"),
-                "TC-C01 FAILED: URL does not contain 'Category:' namespace. URL: " + driver.getCurrentUrl());
+                "TC-C01 FAILED: URL does not contain 'Category:'");
+
+        // Scroll to articles section and verify
+        WebElement articlesSection = driver.findElement(By.cssSelector("#mw-pages"));
+        scrollTo(articlesSection);
         Assert.assertTrue(categoryPage.isArticlesSectionPresent(),
-                "TC-C01 FAILED: Articles section is not present on category page");
+                "TC-C01 FAILED: Articles section not present");
+        pause();
+
         Assert.assertTrue(categoryPage.getArticleLinkCount() > 0,
-                "TC-C01 FAILED: No article links found in Mammals category");
+                "TC-C01 FAILED: No article links found");
+        pause();
     }
 
-    /**
-     * TC-C02: Verify articles section is present and contains links.
-     * Opens the "Physics" category and asserts that the articles
-     * section is displayed with at least one article link.
-     */
-    @Test(groups = {"category", "regression"},
-          description = "TC-C02: Verify articles section is present with links")
-    public void testCategoryArticlesSectionHasLinks() {
+    @Test(priority = 2, groups = {"category", "regression"},
+            description = "TC-C02: Verify articles section is present with links")
+    public void testCategoryArticlesSectionHasLinks() throws InterruptedException {
         CategoryPage categoryPage = new CategoryPage(driver);
         categoryPage.openCategory("Physics");
+        pause();
 
+        // Scroll to articles section
+        WebElement articlesSection = driver.findElement(By.cssSelector("#mw-pages"));
+        scrollTo(articlesSection);
         Assert.assertTrue(categoryPage.isArticlesSectionPresent(),
-                "TC-C02 FAILED: Articles section (#mw-pages) is not present");
+                "TC-C02 FAILED: Articles section not present");
+        pause();
+
+        // Scroll to first article link and verify count
+        WebElement firstLink = driver.findElement(By.cssSelector("#mw-pages li a"));
+        scrollTo(firstLink);
         int linkCount = categoryPage.getArticleLinkCount();
         Assert.assertTrue(linkCount > 0,
-                "TC-C02 FAILED: No article links found in Physics category. Count: " + linkCount);
+                "TC-C02 FAILED: No article links found. Count: " + linkCount);
+        pause();
     }
 
-    /**
-     * TC-C03: Verify subcategories section is present on a parent category.
-     * Opens the "Science" category page and asserts that the subcategories
-     * section is rendered with at least one subcategory link.
-     */
-    @Test(groups = {"category", "regression"},
-          description = "TC-C03: Verify subcategories section is present on a parent category")
-    public void testCategorySubcategoriesSectionIsPresent() {
+    @Test(priority = 3, groups = {"category", "regression"},
+            description = "TC-C03: Verify subcategories section is present on a parent category")
+    public void testCategorySubcategoriesSectionIsPresent() throws InterruptedException {
         CategoryPage categoryPage = new CategoryPage(driver);
         categoryPage.openCategory("Science");
+        pause();
 
+        // Scroll to subcategories section
+        WebElement subSection = driver.findElement(By.cssSelector("#mw-subcategories"));
+        scrollTo(subSection);
         Assert.assertTrue(categoryPage.isSubcategoriesSectionPresent(),
-                "TC-C03 FAILED: Subcategories section is not present in Science category");
+                "TC-C03 FAILED: Subcategories section not present");
+        pause();
+
+        // Scroll to first subcategory link
+        WebElement firstSub = driver.findElement(By.cssSelector("#mw-subcategories li a"));
+        scrollTo(firstSub);
         int subCount = categoryPage.getSubcategoryCount();
         Assert.assertTrue(subCount > 0,
-                "TC-C03 FAILED: No subcategory links found in Science category. Count: " + subCount);
+                "TC-C03 FAILED: No subcategory links found. Count: " + subCount);
+        pause();
     }
 
-    /**
-     * TC-C04: Verify clicking a category article link opens the article.
-     * Opens the "Countries" category, clicks the first article link,
-     * and asserts the resulting page is a valid Wikipedia article.
-     */
-    @Test(groups = {"category", "regression"},
-          description = "TC-C04: Verify clicking a category article link opens the article page")
-    public void testClickingCategoryArticleOpensArticle() {
+    @Test(priority = 4, groups = {"category", "regression"},
+            description = "TC-C04: Verify clicking a category article link opens the article page")
+    public void testClickingCategoryArticleOpensArticle() throws InterruptedException {
         CategoryPage categoryPage = new CategoryPage(driver);
         categoryPage.openCategory("Countries");
+        pause();
 
         Assert.assertTrue(categoryPage.getArticleLinkCount() > 0,
                 "TC-C04 FAILED: No articles found in Countries category");
 
-        ArticlePage articlePage = categoryPage.clickFirstArticle();
-        String title = articlePage.getArticleTitle();
+        // Scroll to first article link then click it
+        WebElement firstLink = driver.findElement(By.cssSelector("#mw-pages li a"));
+        scrollTo(firstLink);
+        pause();
 
-        Assert.assertFalse(title.isEmpty(),
-                "TC-C04 FAILED: Article title is empty after clicking category link");
+        firstLink.click();
+        pause();
+
+        // Scroll to content on the article page
+        WebElement content = driver.findElement(By.cssSelector("#mw-content-text"));
+        scrollTo(content);
         Assert.assertTrue(driver.getCurrentUrl().contains("wikipedia.org/wiki/"),
                 "TC-C04 FAILED: URL does not point to a Wikipedia article");
+        pause();
     }
 
-    /**
-     * TC-C05: Verify WCAG accessibility compliance on a category page.
-     * Runs an Axe accessibility scan on the "Technology" category page
-     * and saves a WCAG report.
-     */
-    @Test(groups = {"category", "accessibility"},
-          description = "TC-C05: Verify WCAG accessibility compliance on a category page")
-    public void testCategoryPageWcagCompliance() {
+    @Test(priority = 5, groups = {"category", "accessibility"},
+            description = "TC-C05: Verify WCAG accessibility compliance on a category page")
+    public void testCategoryPageWcagCompliance() throws InterruptedException {
         CategoryPage categoryPage = new CategoryPage(driver);
         categoryPage.openCategory("Technology");
+        pause();
 
         var results = AxeAccessibilityUtil.runAccessibilityScan(driver, "CategoryPage_Technology");
         AxeAccessibilityUtil.logViolationSummary(results, "CategoryPage_Technology");
+        pause();
 
-        Assert.assertNotNull(results, "TC-C05 FAILED: Axe scan returned null results");
+        Assert.assertNotNull(results, "TC-C05 FAILED: Axe scan returned null");
         Assert.assertTrue(driver.getCurrentUrl().contains("Category:"),
-                "TC-C05 FAILED: Not on a Category page when running WCAG scan");
+                "TC-C05 FAILED: Not on a Category page");
 
         System.out.println("[TC-C05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));

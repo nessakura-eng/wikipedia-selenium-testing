@@ -8,6 +8,8 @@ import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
+import static org.openqa.selenium.devtools.v143.debugger.Debugger.pause;
+
 public class CategoryPage extends BasePage {
 
     public static final String BASE_URL = "https://en.wikipedia.org/wiki/Category:";
@@ -37,17 +39,19 @@ public class CategoryPage extends BasePage {
         super(driver);
     }
 
-    public void openCategory(String categoryName) {
+    public void openCategory(String categoryName) throws InterruptedException {
         // Search for the category, then click the Category link from the article's bottom
         navigateTo("https://en.wikipedia.org/wiki/" + categoryName);
         WaitUtil.waitForVisible(driver, By.cssSelector("#firstHeading, .firstHeading"));
-        // Scroll down to the categories section and click the matching category link
+        Thread.sleep(2000);
+                // Scroll down to the categories section and click the matching category link
         By categoryLinkBy = By.cssSelector(
                 "#catlinks a[href*='Category:'], .catlinks a[href*='Category:']");
         java.util.List<org.openqa.selenium.WebElement> catLinks =
                 driver.findElements(categoryLinkBy);
         if (!catLinks.isEmpty()) {
             scrollToElement(catLinks.get(0));
+            Thread.sleep(2000);
             catLinks.get(0).click();
             WaitUtil.waitForVisible(driver, By.cssSelector("#mw-pages, #mw-subcategories, #firstHeading"));
         } else {

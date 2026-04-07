@@ -1,105 +1,141 @@
 package com.wikipedia.tests;
 
-import com.wikipedia.pages.ArticlePage;
 import com.wikipedia.pages.HistoryPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * MODULE 6: History Module
- *
- * Test Cases:
- * TC-HI01: Verify article history page loads with revision list
- * TC-HI02: Verify revision dates/links are present in history page
- * TC-HI03: Verify contributor links are present in history page
- * TC-HI04: Verify history compare button is present
- * TC-HI05: Verify WCAG accessibility compliance on the history page
- */
 public class HistoryModuleTest extends BaseTest {
 
-    /**
-     * TC-HI01: Verify article history page loads with revision list.
-     * Navigates to the edit history of the "Internet" article and
-     * asserts that the revision list is present.
-     */
-    @Test(groups = {"history", "smoke"},
-          description = "TC-HI01: Verify article history page loads with revision list")
+    @Test(priority = 1, groups = {"history", "smoke"},
+            description = "TC-HI01: Verify article history page loads with revision list")
     public void testHistoryPageLoadsWithRevisionList() {
         HistoryPage historyPage = new HistoryPage(driver);
         historyPage.openHistoryFor("Internet");
+        pause();
 
+        // Scroll to history list
+        WebElement historyList = driver.findElement(
+                By.cssSelector("#pagehistory, ul#pagehistory"));
+        scrollTo(historyList);
         Assert.assertTrue(historyPage.isHistoryListPresent(),
-                "TC-HI01 FAILED: History list (#pagehistory) is not present");
+                "TC-HI01 FAILED: History list not present");
+        pause();
+
         Assert.assertTrue(driver.getCurrentUrl().contains("action=history"),
                 "TC-HI01 FAILED: URL does not contain 'action=history'");
     }
 
-    /**
-     * TC-HI02: Verify revision dates/links are present in history page.
-     * Opens the history for "Eiffel Tower" article and asserts that
-     * the page contains clickable revision date links.
-     */
-    @Test(groups = {"history", "regression"},
-          description = "TC-HI02: Verify revision date links are present in history page")
+    @Test(priority = 2, groups = {"history", "regression"},
+            description = "TC-HI02: Verify revision date links are present in history page")
     public void testHistoryPageHasRevisionDates() {
         HistoryPage historyPage = new HistoryPage(driver);
         historyPage.openHistoryFor("Eiffel_Tower");
+        pause();
 
-        Assert.assertTrue(historyPage.areRevisionDatesPresent(),
-                "TC-HI02 FAILED: No revision date links (oldid) found in history page");
+        // Scroll to first revision date link and click it
+        WebElement firstRevision = driver.findElement(
+                By.cssSelector("a[href*='oldid=']"));
+        scrollTo(firstRevision);
+        pause();
+
+        firstRevision.click();
+        pause();
+
+        // Verify we landed on an old revision page
+        Assert.assertTrue(driver.getCurrentUrl().contains("oldid="),
+                "TC-HI02 FAILED: Did not navigate to a revision");
+
+        // Go back to verify count
+        driver.navigate().back();
+        pause();
+
         int count = historyPage.getRevisionCount();
         Assert.assertTrue(count > 0,
-                "TC-HI02 FAILED: Revision count is 0 for Eiffel Tower history");
+                "TC-HI02 FAILED: Revision count is 0");
+        pause();
     }
 
-    /**
-     * TC-HI03: Verify contributor/user links are present in history page.
-     * Opens the history for "Python (programming language)" and asserts
-     * that contributor usernames/links are displayed.
-     */
-    @Test(groups = {"history", "regression"},
-          description = "TC-HI03: Verify contributor links are present in history page")
+    @Test(priority = 3, groups = {"history", "regression"},
+            description = "TC-HI03: Verify contributor links are present and clickable")
     public void testHistoryPageHasContributorLinks() {
         HistoryPage historyPage = new HistoryPage(driver);
         historyPage.openHistoryFor("Python_(programming_language)");
+        pause();
 
         Assert.assertTrue(historyPage.areContributorLinksPresent(),
-                "TC-HI03 FAILED: No contributor/user links found in history page");
+                "TC-HI03 FAILED: No contributor links found");
+
+        // Scroll to first contributor link and click their profile
+        WebElement contributorLink = driver.findElement(
+                By.cssSelector("a[href*='User:'], a[href*='Special:Contributions']"));
+        scrollTo(contributorLink);
+        pause();
+
+        contributorLink.click();
+        pause();
+
+        // Verify we landed on a user page or contributions page
+        Assert.assertTrue(
+                driver.getCurrentUrl().contains("User:") ||
+                        driver.getCurrentUrl().contains("Special:Contributions"),
+                "TC-HI03 FAILED: Did not navigate to contributor page");
+        pause();
     }
 
-    /**
-     * TC-HI04: Verify history "Compare selected revisions" button is present.
-     * Opens the history of the "United States" article and asserts that
-     * the comparison submit button is visible.
-     */
-    @Test(groups = {"history", "regression"},
-          description = "TC-HI04: Verify history compare button is present")
+    @Test(priority = 4, groups = {"history", "regression"},
+            description = "TC-HI04: Verify history compare button is present and clickable")
     public void testHistoryPageCompareButtonIsPresent() {
         HistoryPage historyPage = new HistoryPage(driver);
         historyPage.openHistoryFor("United_States");
+        pause();
 
+        // Scroll to compare button
+        WebElement compareBtn = driver.findElement(
+                By.cssSelector("#mw-history-compare, input[type='submit'][name='diff']"));
+        scrollTo(compareBtn);
         Assert.assertTrue(historyPage.isCompareButtonPresent(),
-                "TC-HI04 FAILED: Compare revisions button is not present on history page");
+                "TC-HI04 FAILED: Compare button not present");
+        pause();
+
+        // Select first two checkboxes and click compare
+        java.util.List<WebElement> checkboxes = driver.findElements(
+                By.cssSelector("input[type='radio'][name='diff'], input[type='radio'][name='oldid']"));
+        if (checkboxes.size() >= 2) {
+            scrollTo(checkboxes.get(0));
+            jsClick(checkboxes.get(0));
+            pause();
+            scrollTo(checkboxes.get(1));
+            jsClick(checkboxes.get(1));
+            pause();
+        }
+
+        scrollTo(compareBtn);
+        compareBtn.click();
+        pause();
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("diff") ||
+                        driver.getCurrentUrl().contains("action=history"),
+                "TC-HI04 FAILED: Compare did not navigate to diff page");
+        pause();
     }
 
-    /**
-     * TC-HI05: Verify WCAG accessibility compliance on the history page.
-     * Runs an Axe accessibility scan on the history page of the "Moon" article
-     * and saves a WCAG report.
-     */
-    @Test(groups = {"history", "accessibility"},
-          description = "TC-HI05: Verify WCAG accessibility compliance on the history page")
+    @Test(priority = 5, groups = {"history", "accessibility"},
+            description = "TC-HI05: Verify WCAG accessibility compliance on the history page")
     public void testHistoryPageWcagCompliance() {
         HistoryPage historyPage = new HistoryPage(driver);
         historyPage.openHistoryFor("Moon");
+        pause();
 
         var results = AxeAccessibilityUtil.runAccessibilityScan(driver, "HistoryPage_Moon");
         AxeAccessibilityUtil.logViolationSummary(results, "HistoryPage_Moon");
+        pause();
 
-        Assert.assertNotNull(results, "TC-HI05 FAILED: Axe scan returned null results");
+        Assert.assertNotNull(results, "TC-HI05 FAILED: Axe scan returned null");
         Assert.assertTrue(driver.getCurrentUrl().contains("action=history"),
-                "TC-HI05 FAILED: Not on a history page when running WCAG scan");
+                "TC-HI05 FAILED: Not on a history page");
 
         System.out.println("[TC-HI05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));

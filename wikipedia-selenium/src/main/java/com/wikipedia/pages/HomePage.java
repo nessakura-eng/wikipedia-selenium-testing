@@ -101,13 +101,18 @@ public class HomePage extends BasePage {
         return isElementDisplayed(By.cssSelector("#mp-otd, .mp-otd, #On_this_day"));
     }
 
-    public ArticlePage clickRandomArticle() {
+    public ArticlePage clickRandomArticle() throws InterruptedException {
         // The Random Article link exists in the DOM but may be inside a collapsed sidebar.
         // Use JavaScript to click it since waitForClickable requires visibility.
+        WebElement menu = driver.findElement(By.id("vector-main-menu-dropdown-checkbox"));
+        menu.click();
+        Thread.sleep(2000);
+
         By randomLinkBy = By.cssSelector("#n-randompage a, a[href*='Special:Random']");
         WebElement link = driver.findElement(randomLinkBy);
         ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", link);
         WaitUtil.waitForVisible(driver, By.cssSelector("#firstHeading, .firstHeading"));
+        Thread.sleep(2000);
         return new ArticlePage(driver);
     }
 

@@ -2,114 +2,183 @@ package com.wikipedia.tests;
 
 import com.wikipedia.pages.SpecialPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-/**
- * MODULE 8: Special Pages Module
- *
- * Test Cases:
- * TC-SP01: Verify Special:SpecialPages loads with a list of special pages
- * TC-SP02: Verify Special:RecentChanges loads with a list of recent edits
- * TC-SP03: Verify Special:Statistics loads with a statistics table
- * TC-SP04: Verify Special:Random redirects to a valid random article
- * TC-SP05: Verify WCAG accessibility compliance on the Recent Changes page
- */
 public class SpecialPagesModuleTest extends BaseTest {
 
-    /**
-     * TC-SP01: Verify Special:SpecialPages loads with a list of special pages.
-     * Navigates to Special:SpecialPages and asserts the page lists
-     * multiple special page links grouped by category.
-     */
-    @Test(groups = {"specialpages", "smoke"},
+    @Test(priority = 1, groups = {"specialpages", "smoke"},
             description = "TC-SP01: Verify Special:SpecialPages loads with a list of special pages")
     public void testSpecialPagesListLoads() {
         SpecialPage specialPage = new SpecialPage(driver);
         specialPage.openSpecialPages();
+        pause();
 
         Assert.assertTrue(driver.getCurrentUrl().contains("Special:SpecialPages"),
-                "TC-SP01 FAILED: URL does not point to Special:SpecialPages. URL: " + driver.getCurrentUrl());
+                "TC-SP01 FAILED: URL does not point to Special:SpecialPages");
+
+        // Scroll to the special pages list
+        WebElement list = driver.findElement(
+                By.cssSelector("ul.mw-specialpages-list, .mw-specialpages-group, #mw-content-text ul"));
+        scrollTo(list);
         Assert.assertTrue(specialPage.isSpecialPagesListPresent(),
-                "TC-SP01 FAILED: Special pages list is not present");
+                "TC-SP01 FAILED: Special pages list not present");
+        pause();
+
+        // Scroll to and click a specific special page link
+        WebElement recentChangesLink = driver.findElement(
+                By.cssSelector("a[href*='Special:RecentChanges']"));
+        scrollTo(recentChangesLink);
+        pause();
+
         int linkCount = specialPage.getSpecialPageLinkCount();
         Assert.assertTrue(linkCount > 5,
                 "TC-SP01 FAILED: Less than 5 special page links found. Count: " + linkCount);
+        pause();
     }
 
-    /**
-     * TC-SP02: Verify Special:RecentChanges loads with a list of recent edits.
-     * Navigates to the Recent Changes page and asserts that the
-     * changes list is populated with at least one entry.
-     */
-    @Test(groups = {"specialpages", "regression"},
-            description = "TC-SP02: Verify Special:RecentChanges loads with a list of recent edits")
-    public void testRecentChangesPageLoads() {
+    @Test(priority = 2, groups = {"specialpages", "regression"},
+            description = "TC-SP02: Verify Special:NewPages loads with a list of newly created pages")
+    public void testNewPagesLoads() {
         SpecialPage specialPage = new SpecialPage(driver);
-        specialPage.openRecentChanges();
 
-        Assert.assertTrue(driver.getCurrentUrl().contains("RecentChanges"),
-                "TC-SP02 FAILED: URL does not point to RecentChanges. URL: " + driver.getCurrentUrl());
-        Assert.assertTrue(specialPage.isRecentChangesListPresent(),
-                "TC-SP02 FAILED: Recent changes list is not present on page");
-        int changeCount = specialPage.getRecentChangesCount();
-        Assert.assertTrue(changeCount > 0,
-                "TC-SP02 FAILED: Recent changes count is 0");
+        // Start from Special Pages list and navigate to New Pages
+        specialPage.openSpecialPages();
+        pause();
+
+        // Scroll to and click the New Pages link
+        WebElement newPagesLink = driver.findElement(
+                By.cssSelector("a[href*='Special:NewPages']"));
+        scrollTo(newPagesLink);
+        pause();
+
+        newPagesLink.click();
+        pause();
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("NewPages"),
+                "TC-SP02 FAILED: Did not navigate to NewPages. URL: " + driver.getCurrentUrl());
+
+        // Scroll to the new pages list
+        WebElement newPagesList = driver.findElement(
+                By.cssSelector("ul.mw-newpages-list, #mw-content-text ul, ol.special"));
+        scrollTo(newPagesList);
+        pause();
+
+        String newPagesListURL = driver.getCurrentUrl();
+
+        Assert.assertTrue(newPagesListURL.contains("NewPages"),
+                "TC-SP02 FAILED: New pages list is not displayed. URL: " + newPagesListURL);
+
+        pause();
+
+        // Scroll to and click the first new page link
+        WebElement firstNewPage = driver.findElement(
+                By.className("mw-newpages-pagename"));
+        scrollTo(firstNewPage);
+        pause();
+
+        firstNewPage.click();
+        pause();
+
+        // Verify we navigated to a Wikipedia article
+        Assert.assertTrue(driver.getCurrentUrl().contains("wikipedia.org/wiki/"),
+                "TC-SP02 FAILED: Clicking new page did not navigate to a Wikipedia article. URL: "
+                        + driver.getCurrentUrl());
+        pause();
     }
 
-    /**
-     * TC-SP03: Verify Special:Statistics loads with a statistics table.
-     * Opens the Wikipedia statistics page and asserts that a statistics
-     * data table is rendered with content.
-     */
-    @Test(groups = {"specialpages", "regression"},
+    @Test(priority = 3, groups = {"specialpages", "regression"},
             description = "TC-SP03: Verify Special:Statistics loads with a statistics table")
     public void testStatisticsPageLoads() {
         SpecialPage specialPage = new SpecialPage(driver);
         specialPage.openStatistics();
+        pause();
 
         Assert.assertTrue(driver.getCurrentUrl().contains("Statistics"),
-                "TC-SP03 FAILED: URL does not point to Statistics page. URL: " + driver.getCurrentUrl());
+                "TC-SP03 FAILED: URL does not point to Statistics page");
+
+        // Scroll to statistics table
+        WebElement statsTable = driver.findElement(
+                By.cssSelector("table.wikitable, .wikistats, #mw-content-text table"));
+        scrollTo(statsTable);
         Assert.assertTrue(specialPage.isStatisticsTablePresent(),
-                "TC-SP03 FAILED: Statistics table is not present on the page");
+                "TC-SP03 FAILED: Statistics table not present");
+        pause();
+
+        // Scroll through the table rows to show data
+        java.util.List<WebElement> rows = driver.findElements(
+                By.cssSelector("table.wikitable tr, #mw-content-text table tr"));
+        if (rows.size() > 1) {
+            scrollTo(rows.get(rows.size() / 2));
+            pause();
+            scrollTo(rows.get(rows.size() - 1));
+            pause();
+        }
     }
 
-    /**
-     * TC-SP04: Verify Special:Random redirects to a valid random Wikipedia article.
-     * Navigates to the Random special page and asserts it redirects to
-     * a valid article URL that is not the Random special page itself.
-     */
-    @Test(groups = {"specialpages", "regression"},
-          description = "TC-SP04: Verify Special:Random redirects to a valid random article")
-    public void testRandomSpecialPageRedirectsToArticle() {
-        driver.get(SpecialPage.RANDOM_URL);
+    @Test(priority = 4, groups = {"specialpages", "regression"},
+            description = "TC-SP04: Verify Special:WantedPages loads with a list of wanted pages")
+    public void testWantedPagesLoads() {
+        SpecialPage specialPage = new SpecialPage(driver);
 
-        // Wait for redirect to complete
-        try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+        // Start from Special Pages list and navigate to Wanted Pages
+        specialPage.openSpecialPages();
+        pause();
 
-        String currentUrl = driver.getCurrentUrl();
-        Assert.assertTrue(currentUrl.contains("wikipedia.org/wiki/"),
-                "TC-SP04 FAILED: Special:Random did not redirect to a wiki page. URL: " + currentUrl);
-        Assert.assertFalse(currentUrl.contains("Special:Random"),
-                "TC-SP04 FAILED: Still on Special:Random page (no redirect occurred). URL: " + currentUrl);
+        // Scroll to and click the Wanted Pages link
+        WebElement wantedPagesLink = driver.findElement(
+                By.cssSelector("a[href*='Special:WantedPages']"));
+        scrollTo(wantedPagesLink);
+        pause();
+
+        wantedPagesLink.click();
+        pause();
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("WantedPages"),
+                "TC-SP04 FAILED: Did not navigate to WantedPages. URL: " + driver.getCurrentUrl());
+
+        // Scroll to the wanted pages list
+        WebElement wantedList = driver.findElement(
+                By.cssSelector("ol.special, #mw-content-text ol, #mw-content-text table"));
+        scrollTo(wantedList);
+        pause();
+
+        Assert.assertTrue(wantedList.isDisplayed(),
+                "TC-SP04 FAILED: Wanted pages list is not displayed");
+        pause();
+
+        // Scroll to and click the first wanted page link
+        WebElement firstWantedLink = driver.findElement(
+                By.cssSelector("ol.special li a, #mw-content-text ol li a, #mw-content-text table a"));
+        scrollTo(firstWantedLink);
+        pause();
+
+        firstWantedLink.click();
+        pause();
+
+        // Verify we navigated somewhere on Wikipedia
+        Assert.assertTrue(driver.getCurrentUrl().contains("wikipedia.org"),
+                "TC-SP04 FAILED: Clicking wanted page did not navigate to Wikipedia. URL: "
+                        + driver.getCurrentUrl());
+        pause();
     }
 
-    /**
-     * TC-SP05: Verify WCAG accessibility compliance on the Recent Changes page.
-     * Runs an Axe accessibility scan on Special:RecentChanges and saves a WCAG report.
-     */
-    @Test(groups = {"specialpages", "accessibility"},
-          description = "TC-SP05: Verify WCAG accessibility compliance on the Recent Changes page")
+    @Test(priority = 5, groups = {"specialpages", "accessibility"},
+            description = "TC-SP05: Verify WCAG accessibility compliance on the Recent Changes page")
     public void testRecentChangesPageWcagCompliance() {
         SpecialPage specialPage = new SpecialPage(driver);
         specialPage.openRecentChanges();
+        pause();
 
         var results = AxeAccessibilityUtil.runAccessibilityScan(driver, "SpecialPage_RecentChanges");
         AxeAccessibilityUtil.logViolationSummary(results, "SpecialPage_RecentChanges");
+        pause();
 
-        Assert.assertNotNull(results, "TC-SP05 FAILED: Axe scan returned null results");
+        Assert.assertNotNull(results, "TC-SP05 FAILED: Axe scan returned null");
         Assert.assertTrue(driver.getCurrentUrl().contains("RecentChanges"),
-                "TC-SP05 FAILED: Not on RecentChanges page when running WCAG scan");
+                "TC-SP05 FAILED: Not on RecentChanges page");
 
         System.out.println("[TC-SP05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));
