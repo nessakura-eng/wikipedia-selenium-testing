@@ -1,7 +1,6 @@
 package com.wikipedia.tests;
 
 import com.wikipedia.pages.ArticlePage;
-import com.wikipedia.pages.HomePage;
 import com.wikipedia.pages.SearchPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
 import org.openqa.selenium.By;
@@ -68,36 +67,37 @@ public class SearchModuleTest extends BaseTest {
         By suggestionsBy = By.cssSelector(
                 ".cdx-menu-item, .suggestions li, [role='option'], .mw-searchSuggest-link");
 
-        // Click the search box to activate it
-        WebElement searchInput = new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.elementToBeClickable(searchBy));
-        searchInput.click();
+        // Wait for search box to be visible and scroll into view
+        WebElement searchInput = new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.visibilityOfElementLocated(searchBy));
+        scrollTo(searchInput);
 
-        // Type each letter while re-fetching input each time (avoid stale element)
+        // Use JS click to avoid overlay issues in headless
+        jsClick(searchInput);
+
+        // Type each letter slowly; re-fetch to avoid stale element
         String[] letters = {"A", "l", "b", "e", "r", "t"};
         for (String letter : letters) {
             searchInput = new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.elementToBeClickable(searchBy));
+                    .until(ExpectedConditions.visibilityOfElementLocated(searchBy));
             searchInput.sendKeys(letter);
-            // small pause to simulate human typing
             try { Thread.sleep(200); } catch (InterruptedException ignored) {}
         }
 
-        // Wait for autocomplete suggestions to appear
+        // Wait for suggestions to appear
         List<WebElement> suggestions = new WebDriverWait(driver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(suggestionsBy));
 
         Assert.assertTrue(suggestions.size() > 0,
                 "TC-S03 FAILED: No autocomplete suggestions appeared");
 
-        // Scroll to first suggestion and click it
+        // Scroll to first suggestion and click via JS
         WebElement firstSuggestion = new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.elementToBeClickable(suggestionsBy));
-
         scrollTo(firstSuggestion);
-        firstSuggestion.click();
+        jsClick(firstSuggestion);
 
-        // Verify navigation
+        // Wait for navigation
         new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(ExpectedConditions.urlContains("wikipedia.org"));
 
