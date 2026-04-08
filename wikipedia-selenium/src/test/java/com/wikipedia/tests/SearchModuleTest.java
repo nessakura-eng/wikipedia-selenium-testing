@@ -6,8 +6,13 @@ import com.wikipedia.pages.SearchPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
+import java.util.List;
 
 public class SearchModuleTest extends BaseTest {
 
@@ -57,41 +62,47 @@ public class SearchModuleTest extends BaseTest {
             description = "TC-S03: Verify search autocomplete suggestions appear while typing")
     public void testSearchAutocompleteSuggestionsAppear() {
         driver.get("https://en.wikipedia.org/wiki/Main_Page");
-        pause();
 
-        // Click the search box to activate it — this may cause DOM rebuild
         By searchBy = By.cssSelector(
                 "#searchform input[type='search'], .cdx-search-input input, #searchInput");
-        driver.findElement(searchBy).click();
-        pause();
+        By suggestionsBy = By.cssSelector(
+                ".cdx-menu-item, .suggestions li, [role='option'], .mw-searchSuggest-link");
 
-        // Re-fetch input fresh after click (DOM may have rebuilt) then type slowly
+        // Click the search box to activate it
+        WebElement searchInput = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.elementToBeClickable(searchBy));
+        searchInput.click();
+
+        // Type each letter while re-fetching input each time (avoid stale element)
         String[] letters = {"A", "l", "b", "e", "r", "t"};
         for (String letter : letters) {
-            driver.findElement(searchBy).sendKeys(letter);
-            pause();
+            searchInput = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(searchBy));
+            searchInput.sendKeys(letter);
+            // small pause to simulate human typing
+            try { Thread.sleep(200); } catch (InterruptedException ignored) {}
         }
 
-        // Wait for suggestions to appear
-        com.wikipedia.utils.WaitUtil.waitForVisible(driver,
-                By.cssSelector(".cdx-menu-item, .suggestions li, [role='option'], .mw-searchSuggest-link"));
-        pause();
-
-        java.util.List<WebElement> suggestions = driver.findElements(
-                By.cssSelector(".cdx-menu-item, .suggestions li, [role='option'], .mw-searchSuggest-link"));
+        // Wait for autocomplete suggestions to appear
+        List<WebElement> suggestions = new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(suggestionsBy));
 
         Assert.assertTrue(suggestions.size() > 0,
                 "TC-S03 FAILED: No autocomplete suggestions appeared");
 
-        scrollTo(suggestions.get(0));
-        pause();
+        // Scroll to first suggestion and click it
+        WebElement firstSuggestion = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.elementToBeClickable(suggestionsBy));
 
-        suggestions.get(0).click();
-        pause();
+        scrollTo(firstSuggestion);
+        firstSuggestion.click();
+
+        // Verify navigation
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.urlContains("wikipedia.org"));
 
         Assert.assertTrue(driver.getCurrentUrl().contains("wikipedia.org"),
                 "TC-S03 FAILED: Clicking suggestion did not navigate. URL: " + driver.getCurrentUrl());
-        pause();
     }
 
     @Test(priority = 4, groups = {"search", "regression"},
