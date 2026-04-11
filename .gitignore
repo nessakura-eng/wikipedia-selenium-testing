@@ -1,0 +1,23 @@
+# Java / Maven
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Test output
+**/surefire-reports/
+**/failsafe-reports/
+
+# Accessibility and runtime artifacts
+**/wcag-reports/
+**/screenshots/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
