@@ -183,4 +183,82 @@ public class SpecialPagesModuleTest extends BaseTest {
         System.out.println("[TC-SP05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));
     }
+
+    @Test(priority = 6, groups = {"specialpages", "regression"},
+            description = "TC-SP06: Verify Tools menu contains all expected page tools")
+    public void testToolsMenuContainsExpectedLinks() {
+        SpecialPage specialPage = new SpecialPage(driver);
+                specialPage.openMainPage();
+        pause();
+
+        specialPage.openToolsMenu();
+        pause();
+
+        String[] expectedTools = {
+                "What links here",
+                "Related changes",
+                "Permanent link",
+                "Page information",
+                "Cite this page",
+                "Get shortened URL"
+        };
+
+        for (String tool : expectedTools) {
+            Assert.assertTrue(specialPage.isToolLinkPresent(tool),
+                    "TC-SP06 FAILED: Missing tools menu item: " + tool);
+        }
+    }
+
+    @Test(priority = 7, groups = {"specialpages", "regression"},
+            description = "TC-SP07: Verify Appearance options can be toggled")
+    public void testAppearanceOptionsCanBeToggled() {
+        SpecialPage specialPage = new SpecialPage(driver);
+                specialPage.openMainPage();
+        pause();
+
+        specialPage.unpinAppearancePanel();
+        pause();
+        Assert.assertTrue(specialPage.getHtmlClassList().contains("vector-feature-appearance-pinned-clientpref-0"),
+                "TC-SP07 FAILED: Appearance panel did not unpin/hide.");
+    }
+
+    @Test(priority = 8, groups = {"specialpages", "regression"},
+            description = "TC-SP08: Verify 'Cite this page' tool opens citation content")
+    public void testCiteThisPageToolShowsCitationContent() {
+        SpecialPage specialPage = new SpecialPage(driver);
+        specialPage.openMainPage();
+        pause();
+
+        specialPage.openCiteThisPageFromTools();
+        pause();
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("Special:CiteThisPage"),
+                "TC-SP08 FAILED: Did not navigate to Special:CiteThisPage. URL: " + driver.getCurrentUrl());
+
+        String pageText = driver.findElement(By.tagName("body")).getText();
+        Assert.assertTrue(pageText.contains("Main Page") || pageText.contains("main page"),
+                "TC-SP08 FAILED: Citation page does not reference the target page.");
+        Assert.assertTrue(pageText.contains("Cite") || pageText.contains("citation") || pageText.contains("BibTeX"),
+                "TC-SP08 FAILED: Citation-related content not found on Cite This Page view.");
+    }
+
+    @Test(priority = 9, groups = {"specialpages", "regression"},
+            description = "TC-SP09: Verify 'Get shortened URL' generates a short URL")
+    public void testGetShortenedUrlGeneratesShortUrl() {
+        SpecialPage specialPage = new SpecialPage(driver);
+        specialPage.openMainPage();
+        pause();
+
+        specialPage.openGetShortenedUrlFromTools();
+        pause();
+
+        Assert.assertTrue(driver.getCurrentUrl().contains("Special:UrlShortener"),
+                "TC-SP09 FAILED: Did not navigate to Special:UrlShortener. URL: " + driver.getCurrentUrl());
+
+        specialPage.clickShortenButton();
+        pause();
+
+        Assert.assertTrue(specialPage.hasGeneratedShortUrl(),
+                "TC-SP09 FAILED: No generated short URL was found (expected w.wiki link).");
+    }
 }
