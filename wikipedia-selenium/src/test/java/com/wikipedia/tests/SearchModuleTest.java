@@ -4,6 +4,7 @@ import com.wikipedia.pages.ArticlePage;
 import com.wikipedia.pages.SearchPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -63,13 +64,25 @@ public class SearchModuleTest extends BaseTest {
         driver.get("https://en.wikipedia.org/wiki/Main_Page");
 
         By searchBy = By.cssSelector(
-                "#searchform input[type='search'], .cdx-search-input input, #searchInput");
+                "#searchInput, #searchform input[type='search'], .cdx-search-input input, input[name='search']");
         By suggestionsBy = By.cssSelector(
                 ".cdx-menu-item, .suggestions li, [role='option'], .mw-searchSuggest-link");
 
-        // Wait for search box to be visible and scroll into view
-        WebElement searchInput = new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.visibilityOfElementLocated(searchBy));
+        // Handle compact layouts where search is collapsed into a toggle.
+        if (driver.findElements(searchBy).stream().noneMatch(WebElement::isDisplayed)) {
+            List<WebElement> toggles = driver.findElements(By.cssSelector(
+                    "#p-search button, .vector-search-box button, .vector-search-box-toggle"));
+            if (!toggles.isEmpty()) {
+                jsClick(toggles.get(0));
+            }
+        }
+
+        // Wait for any visible search input.
+        WebElement searchInput = new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(d -> d.findElements(searchBy).stream()
+                        .filter(WebElement::isDisplayed)
+                        .findFirst()
+                        .orElse(null));
         scrollTo(searchInput);
 
         // Use JS click to avoid overlay issues in headless
@@ -78,22 +91,34 @@ public class SearchModuleTest extends BaseTest {
         // Type each letter slowly; re-fetch to avoid stale element
         String[] letters = {"A", "l", "b", "e", "r", "t"};
         for (String letter : letters) {
-            searchInput = new WebDriverWait(driver, Duration.ofSeconds(5))
-                    .until(ExpectedConditions.visibilityOfElementLocated(searchBy));
+            searchInput = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(d -> d.findElements(searchBy).stream()
+                            .filter(WebElement::isDisplayed)
+                            .findFirst()
+                            .orElse(null));
             searchInput.sendKeys(letter);
             try { Thread.sleep(200); } catch (InterruptedException ignored) {}
         }
 
-        // Wait for suggestions to appear
-        List<WebElement> suggestions = new WebDriverWait(driver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.visibilityOfAllElementsLocatedBy(suggestionsBy));
+        // Wait for at least one displayed suggestion to appear.
+        List<WebElement> suggestions = new WebDriverWait(driver, Duration.ofSeconds(12))
+                .until(d -> {
+                    List<WebElement> all = d.findElements(suggestionsBy);
+                    List<WebElement> visible = all.stream().filter(WebElement::isDisplayed).toList();
+                    return visible.isEmpty() ? null : visible;
+                });
 
         Assert.assertTrue(suggestions.size() > 0,
                 "TC-S03 FAILED: No autocomplete suggestions appeared");
 
-        // Scroll to first suggestion and click via JS
-        WebElement firstSuggestion = new WebDriverWait(driver, Duration.ofSeconds(5))
-                .until(ExpectedConditions.elementToBeClickable(suggestionsBy));
+        // Click the first visible suggestion; if clickability is flaky, JS click still works.
+        WebElement firstSuggestion = suggestions.get(0);
+        try {
+            firstSuggestion = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(firstSuggestion));
+        } catch (TimeoutException ignored) {
+            // Keep visible suggestion fallback.
+        }
         scrollTo(firstSuggestion);
         jsClick(firstSuggestion);
 

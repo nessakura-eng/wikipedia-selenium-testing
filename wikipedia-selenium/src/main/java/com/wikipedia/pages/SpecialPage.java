@@ -178,13 +178,19 @@ public class SpecialPage extends BasePage {
         return input.isSelected();
     }
 
-    public void unpinAppearancePanel() {
+    public boolean unpinAppearancePanel() {
         By hideButton = By.cssSelector("button[data-event-name='pinnable-header.vector-appearance.unpin']");
-        WebElement button = WaitUtil.waitForClickable(driver, hideButton);
+        List<WebElement> hideButtons = driver.findElements(hideButton);
+        if (hideButtons.isEmpty() || !hideButtons.get(0).isDisplayed()) {
+            return getHtmlClassList().contains("vector-feature-appearance-pinned-clientpref-0");
+        }
+
+        WebElement button = hideButtons.get(0);
         ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", button);
         new WebDriverWait(driver, Duration.ofSeconds(10)).until(
                 d -> d.findElement(By.tagName("html")).getAttribute("class")
                         .contains("vector-feature-appearance-pinned-clientpref-0"));
+        return true;
     }
 
     public void pinAppearancePanel() {

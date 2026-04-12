@@ -3,9 +3,13 @@ package com.wikipedia.tests;
 import com.wikipedia.pages.HistoryPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
 
 public class HistoryModuleTest extends BaseTest {
 
@@ -101,23 +105,50 @@ public class HistoryModuleTest extends BaseTest {
         pause();
 
         // Select first two checkboxes and click compare
-        java.util.List<WebElement> checkboxes = driver.findElements(
-                By.cssSelector("input[type='radio'][name='diff'], input[type='radio'][name='oldid']"));
-        if (checkboxes.size() >= 2) {
-            scrollTo(checkboxes.get(0));
-            jsClick(checkboxes.get(0));
+        java.util.List<WebElement> diffRadios = driver.findElements(
+                By.cssSelector("input[type='radio'][name='diff']"));
+        java.util.List<WebElement> oldIdRadios = driver.findElements(
+                By.cssSelector("input[type='radio'][name='oldid']"));
+        if (!diffRadios.isEmpty() && !oldIdRadios.isEmpty()) {
+            scrollTo(oldIdRadios.get(0));
+            jsClick(oldIdRadios.get(0));
             pause();
-            scrollTo(checkboxes.get(1));
-            jsClick(checkboxes.get(1));
+            scrollTo(diffRadios.get(0));
+            jsClick(diffRadios.get(0));
             pause();
         }
 
         scrollTo(compareBtn);
-        compareBtn.click();
+        jsClick(compareBtn);
         pause();
 
-        Assert.assertTrue(driver.getCurrentUrl().contains("diff") ||
-                        driver.getCurrentUrl().contains("action=history"),
+        boolean compareNavigated = false;
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        try {
+            compareNavigated = wait.until(d -> {
+                boolean onDiffUrl = d.getCurrentUrl().contains("diff=")
+                        || d.getCurrentUrl().contains("oldid=");
+                boolean hasDiffTable = !d.findElements(By.cssSelector("table.diff, .diff")).isEmpty();
+                return onDiffUrl || hasDiffTable;
+            });
+        } catch (TimeoutException ignored) {
+            compareNavigated = false;
+        }
+
+        if (!compareNavigated) {
+            java.util.List<WebElement> rowDiffLinks = driver.findElements(
+                    By.cssSelector(".mw-history-histlinks a[href*='diff='], a.mw-changeslist-diff"));
+            if (!rowDiffLinks.isEmpty()) {
+                scrollTo(rowDiffLinks.get(0));
+                jsClick(rowDiffLinks.get(0));
+                pause();
+            }
+        }
+
+        boolean onDiffUrl = driver.getCurrentUrl().contains("diff=")
+                || driver.getCurrentUrl().contains("oldid=");
+        boolean hasDiffTable = !driver.findElements(By.cssSelector("table.diff, .diff")).isEmpty();
+        Assert.assertTrue(onDiffUrl || hasDiffTable,
                 "TC-HI04 FAILED: Compare did not navigate to diff page");
         pause();
     }

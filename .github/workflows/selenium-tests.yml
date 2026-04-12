@@ -22,19 +22,60 @@ jobs:
 
       - name: Install Chrome
         run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          APT_UPDATE="sudo apt-get update"
+          APT_INSTALL="sudo apt-get install -y"
+          if [ "${ACT:-}" = "true" ]; then
+            APT_UPDATE="sudo apt-get -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true update"
+            APT_INSTALL="sudo apt-get -o APT::Get::AllowUnauthenticated=true install -y"
+          fi
+
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "Google Chrome already installed"
+            google-chrome --version
+            exit 0
+          fi
+
+          eval "$APT_UPDATE"
+          eval "$APT_INSTALL wget gnupg ca-certificates"
+
+          sudo install -d -m 0755 /etc/apt/keyrings
+          wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg
+
+          echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+            | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+
+          eval "$APT_UPDATE"
+          eval "$APT_INSTALL google-chrome-stable"
+
+      - name: Ensure Maven is available
+        run: |
+          APT_UPDATE="sudo apt-get update"
+          APT_INSTALL="sudo apt-get install -y"
+          if [ "${ACT:-}" = "true" ]; then
+            APT_UPDATE="sudo apt-get -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true update"
+            APT_INSTALL="sudo apt-get -o APT::Get::AllowUnauthenticated=true install -y"
+          fi
+
+          if command -v mvn >/dev/null 2>&1; then
+            mvn --version
+          else
+            eval "$APT_UPDATE"
+            eval "$APT_INSTALL maven"
+            mvn --version
+          fi
 
       - name: Run Selenium Tests
         env:
           CI: true
         run: |
           cd wikipedia-selenium
-          mvn test -Dheadless=true
+          mkdir -p "$GITHUB_WORKSPACE/.m2/repository"
+          mvn -Dmaven.repo.local="$GITHUB_WORKSPACE/.m2/repository" test -Dheadless=true
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && !env.ACT }}
         with:
           name: TestNG-Results
           path: |
