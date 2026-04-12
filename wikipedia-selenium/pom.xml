@@ -23,6 +23,7 @@
         <slf4j.version>2.0.13</slf4j.version>
         <maven.surefire.version>3.3.1</maven.surefire.version>
         <wdm.chromeDriverVersion>LATEST_STABLE</wdm.chromeDriverVersion>
+        <testng.suite.file>src/test/resources/testng.xml</testng.suite.file>
     </properties>
 
     <dependencies>
@@ -94,11 +95,26 @@
                 <version>${maven.surefire.version}</version>
                 <configuration>
                     <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
+                        <suiteXmlFile>${testng.suite.file}</suiteXmlFile>
                     </suiteXmlFiles>
                     <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>serial-tests</id>
+            <activation>
+                <property>
+                    <name>serial</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <testng.suite.file>src/test/resources/testng-serial.xml</testng.suite.file>
+            </properties>
+        </profile>
+    </profiles>
 </project>

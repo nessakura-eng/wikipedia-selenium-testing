@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Wikipedia Selenium Test Suite (Serial)" verbose="2" parallel="false" thread-count="1">
+
+    <parameter name="browser" value="chrome"/>
+
+    <!-- MODULE 1: Login Module -->
+    <test name="Login Module Tests">
+        <groups>
+            <run>
+                <include name="login"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.LoginModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 2: Article Module -->
+    <test name="Article Module Tests">
+        <groups>
+            <run>
+                <include name="article"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.ArticleModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 3: Search Module -->
+    <test name="Search Module Tests">
+        <groups>
+            <run>
+                <include name="search"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.SearchModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 4: Home Page Module -->
+    <test name="Home Page Module Tests">
+        <groups>
+            <run>
+                <include name="homepage"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.HomePageModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 5: Category Module -->
+    <test name="Category Module Tests">
+        <groups>
+            <run>
+                <include name="category"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.CategoryModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 6: History Module -->
+    <test name="History Module Tests">
+        <groups>
+            <run>
+                <include name="history"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.HistoryModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 7: Navigation Module -->
+    <test name="Navigation Module Tests">
+        <groups>
+            <run>
+                <include name="navigation"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.NavigationModuleTest"/>
+        </classes>
+    </test>
+
+    <!-- MODULE 8: Special Pages Module -->
+    <test name="Special Pages Module Tests">
+        <groups>
+            <run>
+                <include name="specialpages"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.wikipedia.tests.SpecialPagesModuleTest"/>
+        </classes>
+    </test>
+
+</suite>
