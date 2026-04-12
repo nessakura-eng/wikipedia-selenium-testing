@@ -264,4 +264,77 @@ public class SpecialPagesModuleTest extends BaseTest {
         Assert.assertTrue(specialPage.hasGeneratedShortUrl(),
                 "TC-SP09 FAILED: No generated short URL was found (expected w.wiki link).");
     }
+
+    @Test(priority = 10, groups = {"specialpages", "regression"},
+            description = "TC-SP10: Verify appearance settings can be cycled and applied")
+    public void testAppearanceSettingsCycleAndApply() {
+        SpecialPage specialPage = new SpecialPage(driver);
+        specialPage.openMainPage();
+        pause();
+
+        String htmlBefore = specialPage.getHtmlClassList();
+        Assert.assertTrue(specialPage.selectAppearanceOptionAndWaitForClassChange("Small", htmlBefore),
+                "TC-SP10 FAILED: Could not apply 'Small' text size option.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Small"),
+                "TC-SP10 FAILED: 'Small' text size option is not selected after click.");
+        pause();
+
+        String htmlAfterSmall = specialPage.getHtmlClassList();
+        Assert.assertTrue(specialPage.selectAppearanceOptionAndWaitForClassChange("Large", htmlAfterSmall),
+                "TC-SP10 FAILED: Could not apply 'Large' text size option.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Large"),
+                "TC-SP10 FAILED: 'Large' text size option is not selected after click.");
+        pause();
+
+        String htmlAfterLarge = specialPage.getHtmlClassList();
+        Assert.assertTrue(specialPage.selectAppearanceOptionAndWaitForClassChange("Wide", htmlAfterLarge),
+                "TC-SP10 FAILED: Could not apply 'Wide' width option.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Wide"),
+                "TC-SP10 FAILED: 'Wide' width option is not selected after click.");
+        pause();
+
+        String htmlAfterWide = specialPage.getHtmlClassList();
+        Assert.assertTrue(specialPage.selectAppearanceOptionAndWaitForClassChange("Dark", htmlAfterWide),
+                "TC-SP10 FAILED: Could not apply 'Dark' color option.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Dark"),
+                "TC-SP10 FAILED: 'Dark' color option is not selected after click.");
+        pause();
+
+        String htmlAfterDark = specialPage.getHtmlClassList();
+        Assert.assertTrue(specialPage.selectAppearanceOptionAndWaitForClassChange("Light", htmlAfterDark),
+                "TC-SP10 FAILED: Could not apply 'Light' color option.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Light"),
+                "TC-SP10 FAILED: 'Light' color option is not selected after click.");
+        pause();
+
+        String finalHtml = specialPage.getHtmlClassList();
+        Assert.assertNotEquals(finalHtml, htmlBefore,
+                "TC-SP10 FAILED: HTML classes never changed after cycling appearance settings.");
+    }
+
+    @Test(priority = 11, groups = {"specialpages", "regression"},
+            description = "TC-SP11: Verify appearance settings persist across page navigation")
+    public void testAppearanceSettingsPersistAcrossPages() {
+        SpecialPage specialPage = new SpecialPage(driver);
+        specialPage.openMainPage();
+        pause();
+
+        Assert.assertTrue(specialPage.selectAppearanceOption("Large"),
+                "TC-SP11 FAILED: Could not select 'Large' text size on Main Page.");
+        Assert.assertTrue(specialPage.selectAppearanceOption("Wide"),
+                "TC-SP11 FAILED: Could not select 'Wide' width on Main Page.");
+        Assert.assertTrue(specialPage.selectAppearanceOption("Dark"),
+                "TC-SP11 FAILED: Could not select 'Dark' color on Main Page.");
+        pause();
+
+        driver.navigate().to("https://en.wikipedia.org/wiki/Climate_change");
+        pause();
+
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Large"),
+                "TC-SP11 FAILED: 'Large' text size did not persist on article page.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Wide"),
+                "TC-SP11 FAILED: 'Wide' width did not persist on article page.");
+        Assert.assertTrue(specialPage.isAppearanceOptionSelected("Dark"),
+                "TC-SP11 FAILED: 'Dark' color did not persist on article page.");
+    }
 }

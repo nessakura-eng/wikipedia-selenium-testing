@@ -5,7 +5,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
 import java.util.List;
 
 public class ArticlePage extends BasePage {
@@ -113,5 +116,49 @@ public class ArticlePage extends BasePage {
 
     public int getTocItemCount() {
         return driver.findElements(By.cssSelector("#toc li, .toc li, nav[id*='toc'] li")).size();
+    }
+
+    public boolean openFirstImageInMediaViewer() {
+        By imageLinkLocator = By.cssSelector(
+                "#mw-content-text figure a.mw-file-description, #mw-content-text a.image"
+        );
+        List<WebElement> imageLinks = driver.findElements(imageLinkLocator);
+        if (imageLinks.isEmpty()) {
+            return false;
+        }
+
+        WebElement firstImageLink = imageLinks.get(0);
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'});", firstImageLink);
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", firstImageLink);
+
+        By mediaViewerLocator = By.cssSelector(".mw-mmv-wrapper, .mw-mmv-stage");
+        new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.visibilityOfElementLocated(mediaViewerLocator));
+        return isMediaViewerOpen();
+    }
+
+    public boolean isMediaViewerOpen() {
+        List<WebElement> overlays = driver.findElements(By.cssSelector(".mw-mmv-wrapper, .mw-mmv-stage"));
+        return overlays.stream().anyMatch(WebElement::isDisplayed);
+    }
+
+    public boolean closeMediaViewerWithX() {
+        By closeButtonLocator = By.cssSelector(
+                ".mw-mmv-close, button[title='Close media viewer'], .mw-mmv-wrapper button[aria-label*='Close']"
+        );
+
+        List<WebElement> closeButtons = driver.findElements(closeButtonLocator);
+        if (closeButtons.isEmpty()) {
+            return false;
+        }
+
+        WebElement closeButton = closeButtons.get(0);
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", closeButton);
+
+        By mediaViewerLocator = By.cssSelector(".mw-mmv-wrapper, .mw-mmv-stage");
+        new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.invisibilityOfElementLocated(mediaViewerLocator));
+        return !isMediaViewerOpen();
     }
 }

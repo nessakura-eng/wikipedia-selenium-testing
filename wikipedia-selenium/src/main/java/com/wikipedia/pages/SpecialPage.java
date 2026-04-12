@@ -161,11 +161,8 @@ public class SpecialPage extends BasePage {
     }
 
     public boolean selectAppearanceOption(String optionLabel) {
-        By appearanceToggle = By.cssSelector("#vector-appearance-dropdown-label");
-        WebElement appearance = WaitUtil.waitForClickable(driver, appearanceToggle);
-        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", appearance);
-
-        By optionLocator = By.xpath("//label[normalize-space()='" + optionLabel + "']");
+        ensureAppearanceControlsVisible();
+        By optionLocator = getAppearanceOptionLocator(optionLabel);
         WebElement label = WaitUtil.waitForClickable(driver, optionLocator);
         ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", label);
 
@@ -176,6 +173,63 @@ public class SpecialPage extends BasePage {
 
         WebElement input = driver.findElement(By.id(optionId));
         return input.isSelected();
+    }
+
+    public boolean isAppearanceOptionSelected(String optionLabel) {
+        ensureAppearanceControlsVisible();
+        By optionLocator = getAppearanceOptionLocator(optionLabel);
+        WebElement label = WaitUtil.waitForVisible(driver, optionLocator);
+        String optionId = label.getAttribute("for");
+        if (optionId == null || optionId.isBlank()) {
+            return false;
+        }
+        WebElement input = driver.findElement(By.id(optionId));
+        return input.isSelected();
+    }
+
+    private By getAppearanceOptionLocator(String optionLabel) {
+        return By.xpath(
+                "//*[@id='vector-appearance' or @id='vector-appearance-pinned-container' or @id='vector-appearance-unpinned-container']" +
+                "//label[normalize-space()='" + optionLabel + "' or .//span[normalize-space()='" + optionLabel + "']]"
+        );
+    }
+
+    private void ensureAppearanceControlsVisible() {
+        By visibleOptions = By.cssSelector(
+                "#vector-appearance label, #vector-appearance-pinned-container label, #vector-appearance-unpinned-container label"
+        );
+
+        List<WebElement> optionLabels = driver.findElements(visibleOptions);
+        boolean hasVisibleOptions = optionLabels.stream().anyMatch(WebElement::isDisplayed);
+        if (hasVisibleOptions) {
+            return;
+        }
+
+        List<WebElement> toggles = driver.findElements(By.cssSelector("#vector-appearance-dropdown-label"));
+        if (!toggles.isEmpty() && toggles.get(0).isDisplayed()) {
+            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", toggles.get(0));
+            new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+                    d -> d.findElements(visibleOptions).stream().anyMatch(WebElement::isDisplayed)
+            );
+        }
+    }
+
+    public boolean selectAppearanceOptionAndWaitForClassChange(String optionLabel, String previousHtmlClasses) {
+        if (!selectAppearanceOption(optionLabel)) {
+            return false;
+        }
+
+        if (previousHtmlClasses == null) {
+            return true;
+        }
+
+        new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+                d -> {
+                    String currentClasses = d.findElement(By.tagName("html")).getAttribute("class");
+                    return currentClasses != null && !currentClasses.equals(previousHtmlClasses);
+                }
+        );
+        return true;
     }
 
     public boolean unpinAppearancePanel() {

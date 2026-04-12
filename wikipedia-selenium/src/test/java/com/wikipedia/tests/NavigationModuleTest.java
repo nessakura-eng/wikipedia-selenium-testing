@@ -161,4 +161,22 @@ public class NavigationModuleTest extends BaseTest {
         System.out.println("[TC-N05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));
     }
+
+    @Test(priority = 6, groups = {"navigation", "regression"},
+            description = "TC-N06: Verify language input settings can be set to Korean with keyboard selection")
+    public void testLanguageSettingsInputCanBeSetToKorean() {
+        driver.get("https://en.wikipedia.org/wiki/Giant_Food_(Landover)");
+        NavigationPage navPage = new NavigationPage(driver);
+        pause();
+
+        // Open language settings, select Korean, select a keyboard, and apply
+        Assert.assertTrue(navPage.setInputLanguageToKoreanAndApply(),
+                "TC-N06 FAILED: Could not set input language to Korean and apply settings.");
+        pause();
+
+        // Verify Korean was successfully selected
+        Assert.assertTrue(navPage.isKoreanInputLanguageSelected(),
+                "TC-N06 FAILED: Korean input language was not selected after applying settings.");
+        pause();
+    }
 }

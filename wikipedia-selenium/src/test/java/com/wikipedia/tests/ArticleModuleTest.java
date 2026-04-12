@@ -114,4 +114,27 @@ public class ArticleModuleTest extends BaseTest {
         System.out.println("[TC-A05] WCAG scan complete. Violations: "
                 + (results.getViolations() != null ? results.getViolations().size() : 0));
     }
+
+    @Test(priority = 6, groups = {"article", "regression"},
+            description = "TC-A06: Verify clicking an article image opens fullscreen Media Viewer and X closes it")
+    public void testArticleImageOpensAndClosesInMediaViewer() {
+        ArticlePage articlePage = new ArticlePage(driver);
+        articlePage.openArticle("Albert_Einstein");
+        pause();
+
+        Assert.assertTrue(articlePage.openFirstImageInMediaViewer(),
+                "TC-A06 FAILED: Clicking an article image did not open Media Viewer fullscreen overlay.");
+        pause();
+
+        Assert.assertTrue(articlePage.isMediaViewerOpen(),
+                "TC-A06 FAILED: Media Viewer overlay is not visible after image click.");
+        pause();
+
+        Assert.assertTrue(articlePage.closeMediaViewerWithX(),
+                "TC-A06 FAILED: Could not close Media Viewer using the X close button.");
+        pause();
+
+        Assert.assertFalse(articlePage.isMediaViewerOpen(),
+                "TC-A06 FAILED: Media Viewer overlay is still visible after clicking X.");
+    }
 }
