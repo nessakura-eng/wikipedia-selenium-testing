@@ -13,7 +13,7 @@ The system includes 51 automated test cases across 8 modules, each validating di
 ## Test Coverage
 ### Total Tests
 
-8 Modules × 51 Total Test Cases
+8 Modules, 51 Total Test Cases
 
 ### Test Modules & Test Cases
 
@@ -333,12 +333,4 @@ Accessibility reports: ```target/wcag-reports```
 
 Possible enhancements include:
 
-* Adding HTML accessibility reports
-
-* Implementing parallel cross-browser testing
-
-* Adding CI/CD integration (GitHub Actions or Jenkins)
-
-* Capturing screenshots on test failures
-
-* Adding visual regression testing
+* Adding more test cases to simulate real end-to-end testing
