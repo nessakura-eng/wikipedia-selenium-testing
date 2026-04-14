@@ -4,6 +4,7 @@ import com.wikipedia.pages.ArticlePage;
 import com.wikipedia.pages.SearchPage;
 import com.wikipedia.utils.AxeAccessibilityUtil;
 import org.openqa.selenium.By;
+import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -104,7 +105,10 @@ public class SearchModuleTest extends BaseTest {
         List<WebElement> suggestions = new WebDriverWait(driver, Duration.ofSeconds(12))
                 .until(d -> {
                     List<WebElement> all = d.findElements(suggestionsBy);
-                    List<WebElement> visible = all.stream().filter(WebElement::isDisplayed).toList();
+                    List<WebElement> visible = all.stream().filter(e -> {
+                        try { return e.isDisplayed(); }
+                        catch (StaleElementReferenceException ignored) { return false; }
+                    }).toList();
                     return visible.isEmpty() ? null : visible;
                 });
 
